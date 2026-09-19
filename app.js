@@ -17,7 +17,7 @@
   const fullNameMap = Object.fromEntries(D.players.map(p => [p.id,p.name]));
   const idByName = Object.fromEntries(D.players.map(p => [p.short,p.id]));
 
-  let tab='overview', season='S02', session=0, backendReady=false;
+  let tab='overview', season='S02', session=0, backendReady=false, simPlayer='dan', simWins=1;
   let activePin = sessionStorage.getItem('bnl-score-pin') || '';
   let pinValidated = sessionStorage.getItem('bnl-score-pin-ok') === '1';
   let remoteMatches=[], rallyEvents=[];
@@ -358,11 +358,188 @@
 
   function playersView(){return `<div class="sectionHead"><div><div class="eyebrow">ROSTER</div><h2>7 vận động viên</h2></div></div><div class="playerGrid">${D.players.map((p,i)=>`<article class="playerCard"><div class="playerImage">${p.image?`<img src="${p.image}" alt="${p.name}">`:`<div class="initial">KH</div>`}<span>P${String(i+1).padStart(2,'0')}</span></div><div><h3>${p.name}</h3><p>20 lượt · Mùa 02</p></div></article>`).join('')}</div>`;}
 
+  function analyticsData(){
+    const chemistry=new Map();
+    const rivalry=new Map();
+
+    const ensureChem=(a,b)=>{
+      const key=[a,b].sort().join('|');
+      if(!chemistry.has(key)) chemistry.set(key,{key,a:[a,b].sort()[0],b:[a,b].sort()[1],scheduled:0,played:0,wins:0,diff:0});
+      return chemistry.get(key);
+    };
+    const ensureRival=(a,b)=>{
+      const key=[a,b].sort().join('|');
+      if(!rivalry.has(key)) rivalry.set(key,{key,a:[a,b].sort()[0],b:[a,b].sort()[1],scheduled:0,played:0,wins:{},diff:{}}); 
+      const r=rivalry.get(key);
+      if(r.wins[a]==null) r.wins[a]=0;
+      if(r.wins[b]==null) r.wins[b]=0;
+      if(r.diff[a]==null) r.diff[a]=0;
+      if(r.diff[b]==null) r.diff[b]=0;
+      return r;
+    };
+
+    schedule.forEach(m=>{
+      [m.teamA,m.teamB].forEach(teamIds=>{
+        const c=ensureChem(teamIds[0],teamIds[1]);
+        c.scheduled++;
+      });
+
+      m.teamA.forEach(a=>m.teamB.forEach(b=>{
+        ensureRival(a,b).scheduled++;
+      }));
+
+      const s=currentScore(m.id);
+      if(!s||s.status!=='completed') return;
+
+      const aWin=s.a>s.b;
+      const diff=Math.min(7,Math.abs(s.a-s.b));
+
+      [m.teamA,m.teamB].forEach((teamIds,idx)=>{
+        const c=ensureChem(teamIds[0],teamIds[1]);
+        c.played++;
+        const win=idx===0?aWin:!aWin;
+        if(win) c.wins++;
+        c.diff+=win?diff:-diff;
+      });
+
+      m.teamA.forEach(a=>m.teamB.forEach(b=>{
+        const r=ensureRival(a,b);
+        r.played++;
+        r.wins[a]+=aWin?1:0;
+        r.wins[b]+=aWin?0:1;
+        r.diff[a]+=aWin?diff:-diff;
+        r.diff[b]+=aWin?-diff:diff;
+      }));
+    });
+
+    const chemistryRows=[...chemistry.values()].map(c=>({
+      ...c,
+      winRate:c.played?Math.round(c.wins/c.played*100):null
+    })).sort((a,b)=>b.scheduled-a.scheduled||b.winRate-a.winRate);
+
+    const rivalryRows=[...rivalry.values()].sort((a,b)=>b.scheduled-a.scheduled||b.played-a.played);
+
+    const balance=D.players.map(p=>{
+      const playerMatches=schedule.filter(m=>m.teamA.includes(p.id)||m.teamB.includes(p.id));
+      const partners=[];
+      const opponents=[];
+      const sessions={1:0,2:0,3:0};
+      playerMatches.forEach(m=>{
+        sessions[m.session]++;
+        const own=m.teamA.includes(p.id)?m.teamA:m.teamB;
+        const opp=m.teamA.includes(p.id)?m.teamB:m.teamA;
+        partners.push(own.find(x=>x!==p.id));
+        opponents.push(...opp);
+      });
+      const counts={};
+      partners.forEach(x=>counts[x]=(counts[x]||0)+1);
+      const maxPartner=Math.max(...Object.values(counts));
+      const maxPartnerId=Object.keys(counts).find(k=>counts[k]===maxPartner);
+      return {
+        player:p.id,
+        matches:playerMatches.length,
+        sessions,
+        uniquePartners:new Set(partners).size,
+        uniqueOpponents:new Set(opponents).size,
+        maxPartner,
+        maxPartnerId
+      };
+    });
+
+    return {chemistryRows,rivalryRows,balance};
+  }
+
+  function simulatorRows(){
+    const base=standings().map(x=>({...x}));
+    const target=base.find(x=>x.player===simPlayer);
+    if(target){
+      target.league+=simWins*3;
+      target.won+=simWins;
+      target.played+=simWins;
+    }
+    return base.sort((a,b)=>b.league-a.league||b.diff-a.diff||b.pf-a.pf||b.elo-a.elo||fullNameMap[a.player].localeCompare(fullNameMap[b.player]));
+  }
+
   function mapView(){
-    const pairs=new Map();
-    schedule.forEach(m=>[m.teamA,m.teamB].forEach(t=>{const k=[...t].sort().join('-');pairs.set(k,(pairs.get(k)||0)+1)}));
-    const top=[...pairs.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
-    return `<div class="sectionHead"><div><div class="eyebrow">PAIRING MAP</div><h2>Bản đồ & mô phỏng</h2></div></div><div class="panel"><div class="pairList">${top.map(([k,c])=>{const[a,b]=k.split('-');return `<div><span>${nameMap[a]}–${nameMap[b]}</span><div class="bar"><i style="width:${Math.min(100,c/8*100)}%"></i></div><b>${c}</b></div>`}).join('')}</div></div>`;
+    const {chemistryRows,rivalryRows,balance}=analyticsData();
+    const topChem=chemistryRows.slice(0,6);
+    const topRival=rivalryRows.slice(0,6);
+    const simRows=simulatorRows();
+    const simRank=Math.max(1,simRows.findIndex(x=>x.player===simPlayer)+1);
+    const currentRows=standings();
+    const currentRank=Math.max(1,currentRows.findIndex(x=>x.player===simPlayer)+1);
+    const currentPts=currentRows.find(x=>x.player===simPlayer)?.league||0;
+    const projectedPts=currentPts+simWins*3;
+
+    return `<div class="analysisHero">
+      <div><div class="eyebrow">BNL PERFORMANCE LAB</div><h2>Phân tích mùa giải</h2><p>Từ lịch đấu đến dữ liệu thi đấu: nhìn ra cặp phối hợp, đối đầu, độ cân bằng và kịch bản BXH.</p></div>
+      <div class="analysisSummary">
+        <span><b>${chemistryRows.length}</b><small>cặp đồng đội</small></span>
+        <span><b>${rivalryRows.length}</b><small>cặp đối đầu</small></span>
+        <span><b>35</b><small>trận được mô hình</small></span>
+      </div>
+    </div>
+
+    <section class="analysisGrid">
+      <article class="analysisCard chemistryCard">
+        <div class="analysisHead"><div><small>CHEMISTRY</small><h3>Độ ăn ý đồng đội</h3></div><span>TEAMWORK</span></div>
+        <p class="analysisDesc">Tần suất đứng cùng đội + hiệu quả thực tế khi đã có kết quả.</p>
+        <div class="chemList">
+          ${topChem.map((c,i)=>`<div class="chemRow">
+            <div class="chemNames"><b>${nameMap[c.a]}–${nameMap[c.b]}</b><small>${c.scheduled} trận cùng đội</small></div>
+            <div class="chemBar"><i style="width:${Math.min(100,c.scheduled/8*100)}%"></i></div>
+            <div class="chemMetric"><strong>${c.played?c.winRate+'%':'—'}</strong><small>win rate</small></div>
+          </div>`).join('')}
+        </div>
+      </article>
+
+      <article class="analysisCard rivalryCard">
+        <div class="analysisHead"><div><small>RIVALRY</small><h3>Đối đầu đáng chú ý</h3></div><span>HEAD TO HEAD</span></div>
+        <p class="analysisDesc">Ai gặp nhau nhiều nhất và cán cân thắng thua đang nghiêng về đâu.</p>
+        <div class="rivalList">
+          ${topRival.map(r=>{
+            const aWin=r.wins[r.a]||0,bWin=r.wins[r.b]||0;
+            return `<div class="rivalRow">
+              <div class="rivalPair"><b>${nameMap[r.a]}</b><span>vs</span><b>${nameMap[r.b]}</b></div>
+              <div class="rivalScore">${r.played?`${aWin}–${bWin}`:'—'}</div>
+              <small>${r.scheduled} lần gặp trong lịch</small>
+            </div>`;
+          }).join('')}
+        </div>
+      </article>
+
+      <article class="analysisCard balanceCard">
+        <div class="analysisHead"><div><small>SCHEDULE BALANCE</small><h3>Cân bằng lịch thi đấu</h3></div><span>35 MATCHES</span></div>
+        <p class="analysisDesc">Theo dõi độ đa dạng đồng đội, đối thủ và phân bổ 3 buổi.</p>
+        <div class="balanceTable">
+          <div class="balanceHeader"><span>VĐV</span><span>Buổi 1/2/3</span><span>Partner</span><span>Opponent</span><span>Cặp lặp nhiều</span></div>
+          ${balance.map(b=>`<div class="balanceRow">
+            <b>${nameMap[b.player]}</b>
+            <span>${b.sessions[1]}/${b.sessions[2]}/${b.sessions[3]}</span>
+            <span>${b.uniquePartners}</span>
+            <span>${b.uniqueOpponents}</span>
+            <span class="${b.maxPartner>=7?'warn':''}">${nameMap[b.maxPartnerId]} · ${b.maxPartner}</span>
+          </div>`).join('')}
+        </div>
+      </article>
+
+      <article class="analysisCard simulatorCard">
+        <div class="analysisHead"><div><small>STANDINGS SIMULATOR</small><h3>Nếu thắng các trận tới?</h3></div><span>SCENARIO</span></div>
+        <p class="analysisDesc">Mô phỏng nhanh điểm giải và vị trí nếu một VĐV thắng 1–3 trận tiếp theo. Không thay đổi dữ liệu thật.</p>
+        <div class="simControls">
+          <label>VĐV<select id="simPlayer">${D.players.map(p=>`<option value="${p.id}" ${p.id===simPlayer?'selected':''}>${p.name}</option>`).join('')}</select></label>
+          <label>Số trận thắng<select id="simWins">${[1,2,3].map(n=>`<option value="${n}" ${n===simWins?'selected':''}>${n} trận</option>`).join('')}</select></label>
+        </div>
+        <div class="simResult">
+          <div><small>HIỆN TẠI</small><strong>#${currentRank}</strong><span>${currentPts} điểm</span></div>
+          <i>→</i>
+          <div class="projected"><small>KỊCH BẢN</small><strong>#${simRank}</strong><span>${projectedPts} điểm</span></div>
+        </div>
+        <div class="simTop">
+          ${simRows.slice(0,4).map((r,i)=>`<div class="${r.player===simPlayer?'focus':''}"><span>#${i+1} ${nameMap[r.player]}</span><b>${r.league}đ</b></div>`).join('')}
+        </div>
+      </article>
+    </section>`;
   }
 
   function rulesView(){return `<div class="sectionHead"><div><div class="eyebrow">RULEBOOK</div><h2>Điều lệ vận hành</h2></div></div><div class="rules">
@@ -542,6 +719,10 @@
     document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{tab=b.dataset.go;render()});
     document.querySelectorAll('[data-session]').forEach(b=>b.onclick=()=>{session=Number(b.dataset.session);render()});
     document.querySelectorAll('[data-live]').forEach(b=>b.onclick=()=>liveModal(b.dataset.live));
+    const simPlayerEl=document.getElementById('simPlayer');
+    const simWinsEl=document.getElementById('simWins');
+    if(simPlayerEl) simPlayerEl.onchange=()=>{simPlayer=simPlayerEl.value;render();};
+    if(simWinsEl) simWinsEl.onchange=()=>{simWins=Number(simWinsEl.value);render();};
   }
 
   function render(){
