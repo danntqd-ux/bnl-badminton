@@ -244,10 +244,82 @@
   function stat(n,l,i){return `<div class="stat"><div>${i}</div><strong>${n}</strong><span>${l}</span></div>`;}
 
   function overview(){
-    const portraits=D.players.slice(0,5).map((p,i)=>`<div class="portrait" style="transform:translateX(${i*34}px);z-index:${10-i}">${p.image?`<img src="${p.image}" alt="${p.name}">`:`<span>${p.short}</span>`}</div>`).join('');
     const done=remoteMatches.filter(r=>r.status==='completed').length;
-    return `<div class="hero"><div class="heroCopy"><div class="eyebrow">SEASON 02 / RISE TOGETHER</div><h1>Cùng lên sân.</h1><p>35 trận · 3 buổi · 7 vận động viên · 20 lượt/người. Chấm điểm từng pha trực tiếp trên điện thoại và đồng bộ chung cho cả đội.</p><div class="heroActions"><button class="primary" data-go="schedule">▣ Vào chấm điểm</button><button class="secondary" data-go="standings">🏆 Mở BXH</button></div></div><div class="heroVisual"><div class="visualStack">${portraits}</div></div></div>
-      <div class="statGrid">${stat('35','Trận mùa 02','▣')}${stat('7','Vận động viên','◉')}${stat('20','Lượt / người','↻')}${stat(`${done}/35`,'Đã hoàn tất','✓')}</div>`;
+    const live=remoteMatches.filter(r=>r.status==='live').length;
+    const progress=Math.round(done/35*100);
+    const sessionProgress=[1,2,3].map(s=>{
+      const total=s===1?11:12;
+      const completed=remoteMatches.filter(r=>r.session_no===s&&r.status==='completed').length;
+      return {s,total,completed,pct:Math.round(completed/total*100)};
+    });
+    const visualPlayers=D.players.filter(p=>p.image).slice(0,3);
+    const nextMatch=schedule.find(m=>{
+      const state=remoteMatches.find(r=>r.id===m.id)?.status;
+      return state!=='completed';
+    });
+
+    return `<section class="hero heroV2">
+      <div class="heroCopy heroCopyV2">
+        <div class="eyebrow">SEASON 02 / RISE TOGETHER</div>
+        <h1>Cùng lên sân.</h1>
+        <p class="heroLead">Giải nội bộ được vận hành như một giải đấu thật: lịch đấu rõ ràng, chấm điểm trực tiếp và bảng xếp hạng cập nhật xuyên suốt mùa giải.</p>
+
+        <div class="heroMeta">
+          <span><b>35</b> trận</span>
+          <span><b>3</b> buổi</span>
+          <span><b>7</b> VĐV</span>
+          <span><b>20</b> lượt/người</span>
+        </div>
+
+        <div class="heroActions">
+          <button class="primary primaryV2" data-go="schedule"><span>Vào chấm điểm</span><b>→</b></button>
+          <button class="secondary secondaryV2" data-go="standings">Xem BXH</button>
+        </div>
+      </div>
+
+      <div class="overviewVisual">
+        <div class="visualGlow"></div>
+        <div class="visualBadge"><i></i><span>LIVE SCORING READY</span></div>
+        <div class="portraitDeck">
+          ${visualPlayers.map((p,i)=>`<figure class="portraitCard p${i+1}"><img src="${p.image}" alt="${p.name}"><figcaption>${p.short}</figcaption></figure>`).join('')}
+        </div>
+        <div class="seasonMini">
+          <small>MÙA 02</small>
+          <strong>Rise Together</strong>
+          <span>${backendReady?'Dữ liệu đã đồng bộ':'Đang kết nối dữ liệu'}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="overviewStrip">
+      <article><small>TIẾN ĐỘ</small><strong>${done}/35</strong><span>trận hoàn tất</span><div class="miniProgress"><i style="width:${progress}%"></i></div></article>
+      <article><small>ĐANG DIỄN RA</small><strong>${live}</strong><span>trận live</span></article>
+      <article><small>LƯỢT / NGƯỜI</small><strong>20</strong><span>đã cân bằng lịch</span></article>
+      <article class="systemCard"><small>HỆ THỐNG</small><strong class="${backendReady?'online':'offline'}">${backendReady?'Online':'Đang nối'}</strong><span>Supabase + Vercel</span></article>
+    </section>
+
+    <section class="overviewGrid">
+      <article class="dashboardCard quickCard">
+        <div class="cardHead"><div><small>ĐIỀU HÀNH GIẢI</small><h3>Vào việc trong một chạm</h3></div><span class="statusDot">${backendReady?'SYNC':'...'}</span></div>
+        <div class="quickActions">
+          <button data-go="schedule"><span><b>01</b><em>Chấm điểm trận đấu</em></span><i>→</i></button>
+          <button data-go="standings"><span><b>02</b><em>Xem BXH & giải thưởng</em></span><i>→</i></button>
+          <button data-go="players"><span><b>03</b><em>Hồ sơ vận động viên</em></span><i>→</i></button>
+        </div>
+      </article>
+
+      <article class="dashboardCard progressCard">
+        <div class="cardHead"><div><small>TIẾN ĐỘ THEO BUỔI</small><h3>Toàn mùa trong một màn hình</h3></div><span>${progress}%</span></div>
+        <div class="sessionProgress">
+          ${sessionProgress.map(x=>`<div><div class="sessionRow"><span>Buổi ${x.s}</span><b>${x.completed}/${x.total}</b></div><div class="progressTrack"><i style="width:${x.pct}%"></i></div></div>`).join('')}
+        </div>
+        <div class="nextMatch">
+          <small>TRẬN TIẾP THEO</small>
+          <strong>${nextMatch?`${nameMap[nextMatch.teamA[0]]}–${nameMap[nextMatch.teamA[1]]} <span>vs</span> ${nameMap[nextMatch.teamB[0]]}–${nameMap[nextMatch.teamB[1]]}`:'Mùa giải đã hoàn tất'}</strong>
+          ${nextMatch?`<em>Buổi ${nextMatch.session} · Trận ${String(nextMatch.order).padStart(2,'0')}</em>`:''}
+        </div>
+      </article>
+    </section>`;
   }
 
   function scheduleView(){
