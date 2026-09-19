@@ -7,9 +7,9 @@
   const tabs = [
     ['overview','Tổng quan'],
     ['schedule','Lịch đấu'],
-    ['standings','BXH & giải thưởng'],
+    ['standings','BXH'],
+    ['map','Phân tích'],
     ['players','Vận động viên'],
-    ['map','Bản đồ & mô phỏng'],
     ['rules','Điều lệ']
   ];
 
@@ -252,17 +252,17 @@
       const completed=remoteMatches.filter(r=>r.session_no===s&&r.status==='completed').length;
       return {s,total,completed,pct:Math.round(completed/total*100)};
     });
-    const visualPlayers=D.players.filter(p=>p.image).slice(0,3);
+    const visualPlayers=D.players.filter(p=>p.image).slice(0,6);
     const nextMatch=schedule.find(m=>{
       const state=remoteMatches.find(r=>r.id===m.id)?.status;
       return state!=='completed';
     });
 
-    return `<section class="hero heroV2">
-      <div class="heroCopy heroCopyV2">
-        <div class="eyebrow">SEASON 02 / RISE TOGETHER</div>
-        <h1>Cùng lên sân.</h1>
-        <p class="heroLead">Giải nội bộ được vận hành như một giải đấu thật: lịch đấu rõ ràng, chấm điểm trực tiếp và bảng xếp hạng cập nhật xuyên suốt mùa giải.</p>
+    return `<section class="hero heroTeam">
+      <div class="heroCopy heroTeamCopy">
+        <div class="eyebrow">BNL / SEASON 02 · RISE TOGETHER</div>
+        <h1>Cùng lên sân.<br><span>Cùng tạo mùa giải.</span></h1>
+        <p class="heroLead">Một mùa giải được tạo nên bởi cả đội — thi đấu, ghi điểm, cạnh tranh và cùng kéo nhau tiến lên qua từng trận.</p>
 
         <div class="heroMeta">
           <span><b>35</b> trận</span>
@@ -277,16 +277,15 @@
         </div>
       </div>
 
-      <div class="overviewVisual">
-        <div class="visualGlow"></div>
-        <div class="visualBadge"><i></i><span>LIVE SCORING READY</span></div>
-        <div class="portraitDeck">
-          ${visualPlayers.map((p,i)=>`<figure class="portraitCard p${i+1}"><img src="${p.image}" alt="${p.name}"><figcaption>${p.short}</figcaption></figure>`).join('')}
+      <div class="teamStage" aria-label="Đội hình BNL Mùa 02">
+        <div class="teamAura"></div>
+        <div class="seasonStamp"><i></i><span>ONE COURT · ONE TEAM</span></div>
+        <div class="teamMontage">
+          ${visualPlayers.map((p,i)=>`<figure class="teamMember tm${i+1}"><img src="${p.image}" alt="${p.name}"><figcaption>${p.short}</figcaption></figure>`).join('')}
         </div>
-        <div class="seasonMini">
-          <small>MÙA 02</small>
-          <strong>Rise Together</strong>
-          <span>${backendReady?'Dữ liệu đã đồng bộ':'Đang kết nối dữ liệu'}</span>
+        <div class="teamWordmark">
+          <small>BADMINTON NATIONS LEAGUE</small>
+          <strong>RISE<br>TOGETHER</strong>
         </div>
       </div>
     </section>
@@ -294,8 +293,8 @@
     <section class="overviewStrip">
       <article><small>TIẾN ĐỘ</small><strong>${done}/35</strong><span>trận hoàn tất</span><div class="miniProgress"><i style="width:${progress}%"></i></div></article>
       <article><small>ĐANG DIỄN RA</small><strong>${live}</strong><span>trận live</span></article>
-      <article><small>LƯỢT / NGƯỜI</small><strong>20</strong><span>đã cân bằng lịch</span></article>
-      <article class="systemCard"><small>HỆ THỐNG</small><strong class="${backendReady?'online':'offline'}">${backendReady?'Online':'Đang nối'}</strong><span>Supabase + Vercel</span></article>
+      <article><small>LƯỢT / NGƯỜI</small><strong>20</strong><span>lịch đã cân bằng</span></article>
+      <article class="systemCard"><small>HỆ THỐNG</small><strong class="${backendReady?'online':'offline'}">${backendReady?'Online':'Đang nối'}</strong><span>Live scoring sẵn sàng</span></article>
     </section>
 
     <section class="overviewGrid">
@@ -304,7 +303,7 @@
         <div class="quickActions">
           <button data-go="schedule"><span><b>01</b><em>Chấm điểm trận đấu</em></span><i>→</i></button>
           <button data-go="standings"><span><b>02</b><em>Xem BXH & giải thưởng</em></span><i>→</i></button>
-          <button data-go="players"><span><b>03</b><em>Hồ sơ vận động viên</em></span><i>→</i></button>
+          <button data-go="map"><span><b>03</b><em>Phân tích mùa giải</em></span><i>→</i></button>
         </div>
       </article>
 
