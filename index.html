@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#050817" />
+  <title>BNL Badminton</title>
+  <meta name="description" content="Badminton Nations League — Rise Together" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand" id="brandHome" role="button" tabindex="0">
+        <div class="logo">BNL</div>
+        <div><strong>BADMINTON</strong><span>NATIONS LEAGUE</span></div>
+      </div>
+      <button class="seasonPicker" id="seasonPicker"><span id="seasonLabel">Mùa 02 · Rise Together</span><span>⌄</span></button>
+    </header>
+    <nav class="tabs" id="tabs"></nav>
+    <section class="content">
+      <div class="breadcrumb"><span>BNL CLUB</span><span>›</span><span id="crumbSeason">MÙA 02</span><div class="spacer"></div><span>🔒</span><span>RIÊNG TƯ</span></div>
+      <div id="view"></div>
+    </section>
+  </main>
+  <div id="modalRoot"></div>
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
