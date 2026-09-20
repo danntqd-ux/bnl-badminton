@@ -214,9 +214,11 @@
       m.teamB.forEach(id=>rows[id].elo-=delta/2);
     });
 
-    return Object.values(rows).sort((a,b)=>
-      b.league-a.league||b.diff-a.diff||b.pf-a.pf||b.elo-a.elo||
-      fullNameMap[a.player].localeCompare(fullNameMap[b.player])
+    const allRows=Object.values(rows);
+    const alpha=(a,b)=>fullNameMap[a.player].localeCompare(fullNameMap[b.player],'vi',{sensitivity:'base'});
+    if(completed.length===0) return allRows.sort(alpha);
+    return allRows.sort((a,b)=>
+      b.league-a.league||b.diff-a.diff||b.pf-a.pf||b.elo-a.elo||alpha(a,b)
     );
   }
 
@@ -252,7 +254,7 @@
       const completed=remoteMatches.filter(r=>r.session_no===s&&r.status==='completed').length;
       return {s,total,completed,pct:Math.round(completed/total*100)};
     });
-    const visualPlayers=D.players.filter(p=>p.image).slice(0,6);
+    const visualPlayers=D.players.slice(0,7);
     const nextMatch=schedule.find(m=>{
       const state=remoteMatches.find(r=>r.id===m.id)?.status;
       return state!=='completed';
@@ -281,7 +283,7 @@
         <div class="teamAura"></div>
         <div class="seasonStamp"><i></i><span>ONE COURT · ONE TEAM</span></div>
         <div class="teamMontage">
-          ${visualPlayers.map((p,i)=>`<figure class="teamMember tm${i+1}"><img src="${p.image}" alt="${p.name}"><figcaption>${p.short}</figcaption></figure>`).join('')}
+          ${visualPlayers.map((p,i)=>`<figure class="teamMember tm${i+1} ${p.image?'':'noPhoto'}">${p.image?`<img src="${p.image}" alt="${p.name}">`:`<div class="teamFallback"><b>KH</b><span>Kim Hưng</span></div>`}<figcaption>${p.short}</figcaption></figure>`).join('')}
         </div>
         <div class="teamWordmark">
           <small>BADMINTON NATIONS LEAGUE</small>
@@ -568,17 +570,15 @@
         <button class="close" id="closeModal">×</button>
       </div>
 
-      <div class="scoreBoard">
+      <div class="scoreBoard scoreBoardV3">
         <div class="teamScore left">
-          <small>ĐỘI A</small>
-          <span>${nameMap[m.teamA[0]]} · ${nameMap[m.teamA[1]]}</span>
-          <strong id="scoreA">${s.a}</strong>
+          <div class="teamIdentity"><small>ĐỘI A</small><span>${nameMap[m.teamA[0]]} · ${nameMap[m.teamA[1]]}</span></div>
+          <strong class="scoreNumber" id="scoreA">${s.a}</strong>
         </div>
         <div class="scoreCenter"><span>VS</span><b>${s.status==='completed'?'KẾT THÚC':s.status==='live'?'ĐANG ĐẤU':'SẴN SÀNG'}</b></div>
         <div class="teamScore right">
-          <small>ĐỘI B</small>
-          <span>${nameMap[m.teamB[0]]} · ${nameMap[m.teamB[1]]}</span>
-          <strong id="scoreB">${s.b}</strong>
+          <div class="teamIdentity"><small>ĐỘI B</small><span>${nameMap[m.teamB[0]]} · ${nameMap[m.teamB[1]]}</span></div>
+          <strong class="scoreNumber" id="scoreB">${s.b}</strong>
         </div>
       </div>
 
