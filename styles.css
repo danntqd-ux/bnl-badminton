@@ -57,3 +57,44 @@
 @media(max-width:1050px){.heroTeam{grid-template-columns:1fr}.teamStage{min-height:390px}.teamMontage{inset:36px 40px 0 100px}.analysisGrid{grid-template-columns:1fr}.balanceCard,.simulatorCard{grid-column:1}.analysisHero{align-items:flex-start;flex-direction:column}.simTop{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.heroTeamCopy{padding:28px}.heroTeamCopy h1{font-size:46px}.teamStage{min-height:310px}.teamMember{width:132px;height:235px;border-radius:18px}.teamMontage{inset:36px 0 0 10px}.tm1{left:12%}.tm2{left:30%}.tm3{left:48%}.tm4{left:63%}.tm5{left:-1%}.tm6{left:76%}.teamWordmark{bottom:16px}.teamWordmark strong{font-size:26px}.analysisHero h2{font-size:34px}.analysisSummary{width:100%}.analysisSummary span{flex:1;min-width:0}.chemRow{grid-template-columns:120px 1fr 58px}.rivalList{grid-template-columns:1fr}.balanceTable{overflow-x:auto}.balanceHeader,.balanceRow{min-width:680px}.simResult{grid-template-columns:1fr 34px 1fr}.simTop{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.heroTeamCopy h1{font-size:39px}.teamStage{min-height:270px}.teamMember{width:112px;height:205px}.seasonStamp{top:12px;right:12px}.teamWordmark small{display:none}.teamWordmark strong{font-size:23px}.simControls{display:grid}.simControls select{width:100%}.simResult strong{font-size:30px}.simTop{grid-template-columns:1fr}}
+
+/* UI-03 ranking, full-squad hero, score emphasis */
+.teamMontage{inset:48px 4px 0 0}
+.teamMember{width:164px;height:310px}
+.tm1{left:2%;top:98px;z-index:2;transform:rotate(-10deg) scale(.80)}
+.tm2{left:15%;top:52px;z-index:4;transform:rotate(-6deg) scale(.92)}
+.tm3{left:30%;top:14px;z-index:7;transform:rotate(-2deg) scale(1.03)}
+.tm4{left:47%;top:28px;z-index:6;transform:rotate(3deg) scale(.98)}
+.tm5{left:62%;top:62px;z-index:5;transform:rotate(7deg) scale(.90)}
+.tm6{left:76%;top:102px;z-index:3;transform:rotate(10deg) scale(.79)}
+.tm7{left:88%;top:128px;z-index:1;transform:rotate(12deg) scale(.70)}
+.teamMember.noPhoto{background:radial-gradient(circle at 50% 28%,#2c3d66 0,#162039 38%,#0b1020 100%)}
+.teamFallback{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:6px;background:linear-gradient(180deg,#182441,#0b1121)}
+.teamFallback b{font-size:38px;letter-spacing:.08em;color:#9cafef}
+.teamFallback span{font-size:11px;color:#dbe3f7;font-weight:800}
+.teamMember.noPhoto:before{content:"PHOTO PENDING";position:absolute;z-index:2;top:10px;left:10px;padding:5px 7px;border-radius:7px;background:#090d18cc;border:1px solid #394966;color:#7f8ba4;font-size:8px;letter-spacing:.1em}
+.teamMember figcaption{background:#070b14db;border:1px solid #354562;padding:5px 7px;border-radius:7px}
+.teamWordmark{left:18px;bottom:20px}.teamWordmark strong{font-size:31px}
+.teamStage:after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(180deg,transparent,#070914 88%);pointer-events:none;z-index:7}
+
+.scoreBoardV3{grid-template-columns:1fr 92px 1fr;gap:14px;margin:10px 0 20px}
+.scoreBoardV3 .teamScore{min-height:150px;padding:18px 22px;border-color:#334a78;background:radial-gradient(circle at 82% 52%,#536cff24 0%,transparent 34%),linear-gradient(145deg,#0e1830,#0a1224);box-shadow:inset 0 0 0 1px #ffffff08,0 18px 50px #0005}
+.scoreBoardV3 .teamIdentity{display:grid;gap:10px}
+.scoreBoardV3 .teamIdentity small{font-size:11px;letter-spacing:.18em;color:#7f91b7;font-weight:900}
+.scoreBoardV3 .teamIdentity span{font-size:22px;font-weight:900;color:#eaf0ff}
+.scoreBoardV3 .scoreNumber{font-size:88px;line-height:.9;letter-spacing:-.06em;color:#fff;text-shadow:0 0 24px #6e82ff4a;min-width:92px;text-align:center}
+.scoreBoardV3 .scoreCenter span{font-size:18px;color:#7d8dab}
+.scoreBoardV3 .scoreCenter b{padding:7px 9px;border-radius:999px;background:#111b31;border:1px solid #293b5e;color:#91a5ff}
+@media(max-width:760px){
+  .teamMember{width:118px;height:224px}
+  .tm1{left:-2%}.tm2{left:11%}.tm3{left:26%}.tm4{left:42%}.tm5{left:57%}.tm6{left:72%}.tm7{left:84%}
+  .scoreBoardV3{grid-template-columns:1fr 52px 1fr}
+  .scoreBoardV3 .teamScore{min-height:116px;padding:13px}
+  .scoreBoardV3 .teamIdentity span{font-size:16px}
+  .scoreBoardV3 .scoreNumber{font-size:58px;min-width:60px}
+}
+@media(max-width:520px){
+  .teamMember{width:100px;height:195px}
+  .scoreBoardV3 .teamIdentity span{font-size:14px}
+  .scoreBoardV3 .scoreNumber{font-size:50px}
+}
